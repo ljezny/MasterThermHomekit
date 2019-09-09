@@ -6,7 +6,7 @@ Goal of this project is to connect MasterTherm heatpumps with Apple Homekit. Bas
 
 A Homekit termostat accessory is created.
 
-Pairing code for Homekit: TODO.
+Pairing code for Homekit: 523-12-643
 
 Installation and Usage:
 
