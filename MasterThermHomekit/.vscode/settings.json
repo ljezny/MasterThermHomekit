@@ -2,7 +2,14 @@
     "extensions.ignoreRecommendations": true,
     "C_Cpp.default.configurationProvider": "particle.particle-vscode-core",
     "files.associations": {
-        "*.ino": "cpp"
+        "*.ino": "cpp",
+        "iosfwd": "cpp",
+        "string": "cpp",
+        "set": "cpp",
+        "chrono": "cpp",
+        "sstream": "cpp",
+        "regex": "cpp"
     },
-    "particle.targetDevice": "MasterTherm"
+    "particle.targetDevice": "MasterTherm",
+    "C_Cpp.configurationWarnings": "Disabled"
 }

@@ -16,6 +16,8 @@
 #include "MasterThermAccessory.h"
 
 int restart(String extra);
+int setUsername(String extra);
+int setPassword(String extra);
 void progress(Progress_t progress);
 void setup();
 void loop();
@@ -26,6 +28,16 @@ MasterThermAccessory *acc = new MasterThermAccessory();
 // Cloud functions must return int and take one String
 int restart(String extra) {
   System.reset();
+  return 0;
+}
+
+int setUsername(String extra) {
+  acc->setUsername(extra);
+  return 0;
+}
+
+int setPassword(String extra) {
+  acc->setPassword(extra);
   return 0;
 }
 
@@ -48,6 +60,8 @@ void setup() {
   hkServer->start();
 
   Particle.function("restart", restart);
+  Particle.function("username", setUsername);
+  Particle.function("password", setPassword);
 }
 
 // loop() runs over and over again, as quickly as it can execute.

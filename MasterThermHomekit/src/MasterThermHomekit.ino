@@ -18,6 +18,16 @@ int restart(String extra) {
   return 0;
 }
 
+int setUsername(String extra) {
+  acc->setUsername(extra);
+  return 0;
+}
+
+int setPassword(String extra) {
+  acc->setPassword(extra);
+  return 0;
+}
+
 void progress(Progress_t progress) {
     hkLog.info("Homekit progress callback: %d",progress);
 }
@@ -37,6 +47,8 @@ void setup() {
   hkServer->start();
 
   Particle.function("restart", restart);
+  Particle.function("username", setUsername);
+  Particle.function("password", setPassword);
 }
 
 // loop() runs over and over again, as quickly as it can execute.
