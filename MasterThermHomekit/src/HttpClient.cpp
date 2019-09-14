@@ -234,7 +234,7 @@ void HttpClient::request(http_request_t &aRequest, http_response_t &aResponse, h
         // Unless there has been an error or timeout wait 200ms to allow server
         // to respond or close connection.
         if (!error && !timeout) {
-            delay(200);
+            delay(10);
         }
     } while (client.connected() && !timeout && !error);
 
