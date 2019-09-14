@@ -13,12 +13,15 @@ class MasterThermAccessory: public HAPAccessoryDescriptor {
 private:
   int TIME_PERIOD_MS = 20000;
   String sessionId = "";
+  int moduleId = 0;
   void identify(bool oldValue, bool newValue, HKConnection *sender);
   long lastUpdateMS = 0;
   void setTargetHeatingCoolingState (bool oldValue, bool newValue, HKConnection *sender);
   void setTargetTemperature (float oldValue, float newValue, HKConnection *sender);
 
   MasterThermCredentials credentials;
+
+  intCharacteristics *currentHeatingState;
 
   bool login();
   bool refreshPassiveData();
