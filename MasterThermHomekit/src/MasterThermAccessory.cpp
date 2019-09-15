@@ -15,13 +15,25 @@ const char* BASE_URL = "mastertherm.vip-it.cz";
 const char* PARAMS_BASE_URL = "mastertherm.vip-it.cz";
 
 void MasterThermAccessory::setTargetHeatingCoolingState (bool oldValue, bool newValue, HKConnection *sender){
-    //Particle.publish("nixie/power", newValue ? "on" : "off", PUBLIC);
-    //on = newValue ? 1 : 0;
+    if(oldValue == newValue) {
+      return;
+    }
+    String varibleId = String("D_3");
+    String variableValue = newValue ? "1" : "0";
+    checkLogin();
+    performSetActiveData(varibleId,variableValue);
+
+    currentHeatingState->characteristics::setValue(newValue ? "1":"0");
 }
 
 void MasterThermAccessory::setTargetTemperature (float oldValue, float newValue, HKConnection *sender){
-    //Particle.publish("nixie/power", newValue ? "on" : "off", PUBLIC);
-    //on = newValue ? 1 : 0;
+    if(oldValue == newValue) {
+      return;
+    }
+    String varibleId = String("A_191");
+    String variableValue = String::format("%f",newValue);
+    checkLogin();
+    performSetActiveData(varibleId,variableValue);
 }
 
 void MasterThermAccessory::identify(bool oldValue, bool newValue, HKConnection *sender) {
@@ -41,8 +53,43 @@ void passwordSHA1(char* password, char *hexresult) {
   }
 }
 
-static int messageId = 0;
-bool MasterThermAccessory::refreshPassiveData() {
+bool MasterThermAccessory::performSetActiveData(String variableId, String variableValue) {
+  bool result = false;
+  TCPClient client;
+  if(client.connect(PARAMS_BASE_URL,8091)) {
+    Serial.println("ActiveData: connected.");
+    String body = String::format("moduleId=%d&messageId=1&deviceId=1&configFile=varfile_mt1_config&errorResponse=true&variableId=%s&variableValue=%s",this->moduleId, variableId.c_str(),variableValue.c_str());
+
+    client.print("POST /mt/ActiveVizualizationServlet HTTP/1.0\r\n");
+    client.print("Connection: close\r\n");
+    client.print("Content-Type: application/x-www-form-urlencoded\r\n");
+    client.printf("Content-Length: %d\r\n",body.length());
+    client.printf("Cookie: PHPSESSID=%s; path=/\r\n",sessionId.c_str());
+    client.print("\r\n");
+    client.print(body);
+    client.flush();
+    
+    const int BUFFER_SIZE = 1024;
+    char line_buffer[BUFFER_SIZE] = {'\0'};
+    char sessionId[64];
+    int pos = 0;
+    while(client.connected()) {
+      while(client.available()) {
+        char x = client.read();
+        Serial.print(x);
+        line_buffer[pos++] = x;
+        if(x == '\n') {
+            pos = 0;
+            memset(line_buffer,0,BUFFER_SIZE);
+        }
+      }
+    }
+    client.stop();
+  }
+  return result;
+}
+
+bool MasterThermAccessory::performRefreshPassiveData() {
   bool result = false;
   TCPClient client;
   if(client.connect(PARAMS_BASE_URL,8091)) {
@@ -68,19 +115,29 @@ bool MasterThermAccessory::refreshPassiveData() {
         //Serial.print(x);
         line_buffer[pos++] = x;
         if(x == '\n' || x == ',') {
-            //Serial.println(line_buffer);
             int paramId = 0;
             int intValue = 0;
-            int floatValue = 0;
+            char floatValueArg[16];
             if(sscanf(line_buffer,"\"I_%d\":\"%d\"",&paramId,&intValue)) { 
                 
-            } else if(sscanf(line_buffer,"\"A_%d\":\"%f\"",&paramId,&floatValue)) { 
-            
+            } else if(sscanf(line_buffer,"\"A_%d\":\"%s\",",&paramId,&floatValueArg)) {
+              float floatValue = atof(floatValueArg);
+              if(paramId == 211) { //real temperature
+                Serial.printlnf("HeatPump real temperature: %f",floatValue);
+                currentTemperature->characteristics::setValue(String::format("%f",MIN(MAX(floatValue,MIN_TEMPERATURE),MAX_TEMPERATURE)).c_str());
+                result = true;
+              }
+              if(paramId == 191) { //target temperature
+                Serial.printlnf("HeatPump target temperature: %f",floatValue);
+                targetTemperature->characteristics::setValue(String::format("%f",MIN(MAX(floatValue,MIN_TEMPERATURE),MAX_TEMPERATURE)).c_str());
+                result = true;
+              }
             } else if(sscanf(line_buffer,"\"D_%d\":\"%d\"",&paramId,&intValue)) { 
               if(paramId == 3) { //HeatPump mode (on/off)
                 Serial.printlnf("HeatPump on: %d",intValue);
                 currentHeatingState->characteristics::setValue(intValue ? "1":"0");
-                currentHeatingState->notify(NULL);
+                targetHeatingState->characteristics::setValue(intValue ? "1":"0");
+                result = true;
               }
             }
 
@@ -89,11 +146,12 @@ bool MasterThermAccessory::refreshPassiveData() {
         }
       }
     }
+    client.stop();
   }
   return result;
 }
 
-bool MasterThermAccessory::login() {
+bool MasterThermAccessory::performLogin() {
   bool result = false;
   char hashPassword[41];
   memset(hashPassword,0,41);
@@ -131,6 +189,7 @@ bool MasterThermAccessory::login() {
             if(sscanf(line_buffer,"\"modules\":[{\"id\":\"%d\",",&moduleId)) { 
                 this->moduleId = moduleId;
                 Serial.printf("moduleId: %d\n",moduleId);
+                result = true;
             }
 
             pos = 0;
@@ -143,18 +202,25 @@ bool MasterThermAccessory::login() {
   return result;
 }
 
+void MasterThermAccessory::checkLogin(){
+  if((millis() - lastLoginMS) > LOGIN_PERIOD_MS) {
+    if(performLogin()) {
+      lastLoginMS = millis();
+    }
+  }
+}
+
+void MasterThermAccessory::checkPassiveData(){
+  if((millis() - lastRefreshPassiveDataMS) > REFRESH_PERIOD_MS) {
+    if(performRefreshPassiveData()) {
+      lastRefreshPassiveDataMS = millis();
+    }
+  }
+}
 
 bool MasterThermAccessory::handle() {
-    if((millis() - lastUpdateMS) > TIME_PERIOD_MS) {
-        lastUpdateMS = millis();
-
-        if(sessionId.length() == 0) {
-          login();
-        }
-        if(sessionId.length() > 0) {
-          refreshPassiveData();
-        }
-    }
+    checkLogin();
+    checkPassiveData();
 }
 
 void MasterThermAccessory::initAccessorySet() {
@@ -176,21 +242,21 @@ void MasterThermAccessory::initAccessorySet() {
   currentHeatingState->characteristics::setValue("0");
   thermostatAcc->addCharacteristics(thermostatService,currentHeatingState);
 
-  intCharacteristics *targetHeatingState = new intCharacteristics(charType_targetHeatCoolMode,premission_read|premission_write|premission_notify,0,1,1,unit_none);
+  targetHeatingState = new intCharacteristics(charType_targetHeatCoolMode,premission_read|premission_write|premission_notify,0,1,1,unit_none);
   targetHeatingState->characteristics::setValue("0");
   targetHeatingState->valueChangeFunctionCall = std::bind(&MasterThermAccessory::setTargetHeatingCoolingState, this, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
   thermostatAcc->addCharacteristics(thermostatService,targetHeatingState);
 
-  floatCharacteristics *currentTemperature = new floatCharacteristics(charType_currentTemperature,premission_read|premission_notify,0,40,0.1,unit_celsius);
-  currentTemperature->characteristics::setValue("0");
+  currentTemperature = new floatCharacteristics(charType_currentTemperature,premission_read|premission_notify,MIN_TEMPERATURE,MAX_TEMPERATURE,0.5,unit_celsius);
+  currentTemperature->characteristics::setValue(String::format("%d",MIN_TEMPERATURE).c_str());
   thermostatAcc->addCharacteristics(thermostatService,currentTemperature);
 
-  floatCharacteristics *targetTemperature = new floatCharacteristics(charType_targetTemperature,premission_read|premission_write|premission_notify,0,40,0.1,unit_celsius);
-  targetTemperature->characteristics::setValue("0");
+  targetTemperature = new floatCharacteristics(charType_targetTemperature,premission_read|premission_write|premission_notify,MIN_TEMPERATURE,MAX_TEMPERATURE,0.5,unit_celsius);
+  targetTemperature->characteristics::setValue(String::format("%d",MIN_TEMPERATURE).c_str());
   targetTemperature->valueChangeFunctionCall = std::bind(&MasterThermAccessory::setTargetTemperature, this, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
   thermostatAcc->addCharacteristics(thermostatService,targetTemperature);
 
-  intCharacteristics *temperatureDisplayUnits = new intCharacteristics(charType_temperatureUnit,premission_read|premission_write|premission_notify,0,3,1,unit_none); 
+  intCharacteristics *temperatureDisplayUnits = new intCharacteristics(charType_temperatureUnit,premission_read|premission_write|premission_notify,0,0,1,unit_none); 
   temperatureDisplayUnits->characteristics::setValue("0");
   thermostatAcc->addCharacteristics(thermostatService,temperatureDisplayUnits);
 }

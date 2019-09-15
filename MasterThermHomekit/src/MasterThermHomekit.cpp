@@ -16,6 +16,7 @@
 #include "MasterThermAccessory.h"
 
 int restart(String extra);
+int resetAll(String extra);
 int setUsername(String extra);
 int setPassword(String extra);
 void progress(Progress_t progress);
@@ -27,6 +28,12 @@ MasterThermAccessory *acc = new MasterThermAccessory();
 
 // Cloud functions must return int and take one String
 int restart(String extra) {
+  System.reset();
+  return 0;
+}
+
+int resetAll(String extra) {
+  HKPersistor().resetAll();
   System.reset();
   return 0;
 }
@@ -51,7 +58,7 @@ void setup() {
 	randomSeed(Time.now());//we need to somehow init random seed, so device identity will be unique
   Serial.begin();
 
-  //HKPersistor().resetAll();
+  //
 
   hkServer = new HKServer(acc->getDeviceType(),"MasterTherm Thermostat","523-12-643",progress);
 
@@ -60,6 +67,7 @@ void setup() {
   hkServer->start();
 
   Particle.function("restart", restart);
+  Particle.function("resetAll", resetAll);
   Particle.function("username", setUsername);
   Particle.function("password", setPassword);
 }

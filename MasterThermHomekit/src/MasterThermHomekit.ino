@@ -18,6 +18,12 @@ int restart(String extra) {
   return 0;
 }
 
+int resetAll(String extra) {
+  HKPersistor().resetAll();
+  System.reset();
+  return 0;
+}
+
 int setUsername(String extra) {
   acc->setUsername(extra);
   return 0;
@@ -38,7 +44,7 @@ void setup() {
 	randomSeed(Time.now());//we need to somehow init random seed, so device identity will be unique
   Serial.begin();
 
-  //HKPersistor().resetAll();
+  //
 
   hkServer = new HKServer(acc->getDeviceType(),"MasterTherm Thermostat","523-12-643",progress);
 
@@ -47,6 +53,7 @@ void setup() {
   hkServer->start();
 
   Particle.function("restart", restart);
+  Particle.function("resetAll", resetAll);
   Particle.function("username", setUsername);
   Particle.function("password", setPassword);
 }

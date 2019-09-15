@@ -3,6 +3,7 @@
 
 #include "HKAccessory.h"
 #include "HAPAccessoryDescriptor.h"
+#include <limits.h>
 
 typedef struct MasterThermCredentials {
   char username[24];
@@ -11,20 +12,34 @@ typedef struct MasterThermCredentials {
 
 class MasterThermAccessory: public HAPAccessoryDescriptor {
 private:
-  int TIME_PERIOD_MS = 20000;
+  const int REFRESH_PERIOD_MS = 10000;
+  const int LOGIN_PERIOD_MS = 60000;
+  const int MIN_TEMPERATURE = 15;
+  const int MAX_TEMPERATURE = 30;
+
+  long lastRefreshPassiveDataMS = -REFRESH_PERIOD_MS;
+  long lastLoginMS = -LOGIN_PERIOD_MS;
+
   String sessionId = "";
   int moduleId = 0;
   void identify(bool oldValue, bool newValue, HKConnection *sender);
-  long lastUpdateMS = 0;
+  
   void setTargetHeatingCoolingState (bool oldValue, bool newValue, HKConnection *sender);
   void setTargetTemperature (float oldValue, float newValue, HKConnection *sender);
 
   MasterThermCredentials credentials;
 
   intCharacteristics *currentHeatingState;
+  floatCharacteristics *currentTemperature;
+  floatCharacteristics *targetTemperature;
+  intCharacteristics *targetHeatingState;
 
-  bool login();
-  bool refreshPassiveData();
+  void checkLogin();
+  void checkPassiveData();
+  bool performLogin();
+  bool performRefreshPassiveData();
+  bool performSetActiveData(String variableId, String variableValue);
+
 public:
   MasterThermAccessory() {
   }
