@@ -73,7 +73,8 @@ bool MasterThermAccessory::performSetActiveData(String variableId, String variab
     char line_buffer[BUFFER_SIZE] = {'\0'};
     char sessionId[64];
     int pos = 0;
-    while(client.connected()) {
+    int timeout = 2000;
+    while(client.connected() && timeout-->0) {
       while(client.available()) {
         char x = client.read();
         Serial.print(x);
@@ -83,6 +84,7 @@ bool MasterThermAccessory::performSetActiveData(String variableId, String variab
             memset(line_buffer,0,BUFFER_SIZE);
         }
       }
+      delay(10);
     }
     client.stop();
   }
@@ -109,7 +111,8 @@ bool MasterThermAccessory::performRefreshPassiveData() {
     char line_buffer[BUFFER_SIZE] = {'\0'};
     char sessionId[64];
     int pos = 0;
-    while(client.connected()) {
+    int timeout = 2000;
+    while(client.connected() && timeout-->0) {
       while(client.available()) {
         char x = client.read();
         //Serial.print(x);
@@ -145,6 +148,7 @@ bool MasterThermAccessory::performRefreshPassiveData() {
             memset(line_buffer,0,BUFFER_SIZE);
         }
       }
+      delay(10);
     }
     client.stop();
   }
@@ -176,7 +180,8 @@ bool MasterThermAccessory::performLogin() {
     char line_buffer[BUFFER_SIZE] = {'\0'};
     char sessionId[64];
     int pos = 0;
-    while(client.connected()) {
+    int timeout = 2000;
+    while(client.connected() && timeout-->0) {
       while(client.available()) {
         char x = client.read();
         line_buffer[pos++] = x;
@@ -196,6 +201,7 @@ bool MasterThermAccessory::performLogin() {
             memset(line_buffer,0,BUFFER_SIZE);
         } 
       }
+      delay(10);
     }
     client.stop();
   }
