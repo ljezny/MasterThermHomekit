@@ -23,6 +23,8 @@ void progress(Progress_t progress);
 void setup();
 void loop();
 #line 12 "/Users/ljezny/Projects/MasterThermHomekit/MasterThermHomekit/src/MasterThermHomekit.ino"
+SerialLogHandler logHandler(LOG_LEVEL_ALL);
+
 HKServer *hkServer = NULL;
 MasterThermAccessory *acc = new MasterThermAccessory();
 
@@ -78,6 +80,6 @@ void loop() {
   didAnything |= hkServer->handle(); //handle connections, did anything (i.e processed some requests etc.)
   didAnything |= acc->handle(); //handle accessory, did anything (i.e read some sensors)
   if(didAnything) {
-
+     
   }
 }

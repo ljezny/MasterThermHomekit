@@ -9,6 +9,8 @@
 
 #include "MasterThermAccessory.h"
 
+SerialLogHandler logHandler(LOG_LEVEL_ALL);
+
 HKServer *hkServer = NULL;
 MasterThermAccessory *acc = new MasterThermAccessory();
 
@@ -60,10 +62,6 @@ void setup() {
 
 // loop() runs over and over again, as quickly as it can execute.
 void loop() {
-  bool didAnything = false; //!hkServer->hasConnections();
-  didAnything |= hkServer->handle(); //handle connections, did anything (i.e processed some requests etc.)
-  didAnything |= acc->handle(); //handle accessory, did anything (i.e read some sensors)
-  if(didAnything) {
-
-  }
+  hkServer->handle(); //handle connections, did anything (i.e processed some requests etc.)
+  acc->handle();
 }
