@@ -63,5 +63,8 @@ void setup() {
 // loop() runs over and over again, as quickly as it can execute.
 void loop() {
   hkServer->handle(); //handle connections, did anything (i.e processed some requests etc.)
-  acc->handle();
+  if(hkServer->isPaired()) {
+    acc->handle();
+  }
+
 }
