@@ -7,7 +7,6 @@
 #include <Particle.h>
 #include "HKLog.h"
 
-#include "HttpClient.h"
 #include "sha1.h"
 
 
@@ -37,7 +36,7 @@ void MasterThermAccessory::setTargetTemperature (float oldValue, float newValue,
 }
 
 void MasterThermAccessory::identify(bool oldValue, bool newValue, HKConnection *sender) {
-    
+
 }
 
 
@@ -46,7 +45,7 @@ void passwordSHA1(char* password, char *hexresult) {
   size_t offset;
 
   xSHA1( result, password, strlen(password) );
-  
+
   /* format the hash for comparison */
   for( offset = 0; offset < 20; offset++) {
     sprintf( ( hexresult + (2*offset)), "%02x", result[offset]&0xff);
@@ -68,12 +67,12 @@ bool MasterThermAccessory::performSetActiveData(String variableId, String variab
     client.print("\r\n");
     client.print(body);
     client.flush();
-    
+
     const int BUFFER_SIZE = 1024;
     char line_buffer[BUFFER_SIZE] = {'\0'};
     char sessionId[64];
     int pos = 0;
-    int timeout = 2000;
+    int timeout = 500;
     while(client.connected() && timeout-->0) {
       while(client.available()) {
         char x = client.read();
@@ -106,12 +105,12 @@ bool MasterThermAccessory::performRefreshPassiveData() {
     client.print("\r\n");
     client.print(body);
     client.flush();
-    
+
     const int BUFFER_SIZE = 1024;
     char line_buffer[BUFFER_SIZE] = {'\0'};
     char sessionId[64];
     int pos = 0;
-    int timeout = 2000;
+    int timeout = 500;
     while(client.connected() && timeout-->0) {
       while(client.available()) {
         char x = client.read();
@@ -121,8 +120,8 @@ bool MasterThermAccessory::performRefreshPassiveData() {
             int paramId = 0;
             int intValue = 0;
             char floatValueArg[16];
-            if(sscanf(line_buffer,"\"I_%d\":\"%d\"",&paramId,&intValue)) { 
-                
+            if(sscanf(line_buffer,"\"I_%d\":\"%d\"",&paramId,&intValue)) {
+
             } else if(sscanf(line_buffer,"\"A_%d\":\"%s\",",&paramId,&floatValueArg)) {
               float floatValue = atof(floatValueArg);
               if(paramId == 211) { //real temperature
@@ -135,7 +134,7 @@ bool MasterThermAccessory::performRefreshPassiveData() {
                 targetTemperature->characteristics::setValue(String::format("%f",MIN(MAX(floatValue,MIN_TEMPERATURE),MAX_TEMPERATURE)).c_str());
                 result = true;
               }
-            } else if(sscanf(line_buffer,"\"D_%d\":\"%d\"",&paramId,&intValue)) { 
+            } else if(sscanf(line_buffer,"\"D_%d\":\"%d\"",&paramId,&intValue)) {
               if(paramId == 3) { //HeatPump mode (on/off)
                 Serial.printlnf("HeatPump on: %d",intValue);
                 currentHeatingState->characteristics::setValue(intValue ? "1":"0");
@@ -173,25 +172,25 @@ bool MasterThermAccessory::performLogin() {
     client.printf("Content-Length: %d\r\n",body.length());
     client.print("\r\n");
     client.print(body);
-    
+
     client.flush();
 
     const int BUFFER_SIZE = 1024;
     char line_buffer[BUFFER_SIZE] = {'\0'};
     char sessionId[64];
     int pos = 0;
-    int timeout = 2000;
+    int timeout = 500;
     while(client.connected() && timeout-->0) {
       while(client.available()) {
         char x = client.read();
         line_buffer[pos++] = x;
         if(x == '\n' || x == ',') {
-            if(sscanf(line_buffer,"Set-Cookie: PHPSESSID=%[^;]; path=/\r\n",sessionId)) { 
+            if(sscanf(line_buffer,"Set-Cookie: PHPSESSID=%[^;]; path=/\r\n",sessionId)) {
                 this->sessionId = String(sessionId);
                 Serial.printf("sessionId: %s\n",sessionId);
             }
             int moduleId = 0;
-            if(sscanf(line_buffer,"\"modules\":[{\"id\":\"%d\",",&moduleId)) { 
+            if(sscanf(line_buffer,"\"modules\":[{\"id\":\"%d\",",&moduleId)) {
                 this->moduleId = moduleId;
                 Serial.printf("moduleId: %d\n",moduleId);
                 result = true;
@@ -199,7 +198,7 @@ bool MasterThermAccessory::performLogin() {
 
             pos = 0;
             memset(line_buffer,0,BUFFER_SIZE);
-        } 
+        }
       }
       delay(10);
     }
@@ -233,7 +232,7 @@ void MasterThermAccessory::initAccessorySet() {
   //Particle.variable("username", &this->on, INT);
 
   EEPROM.get(0,credentials);
-  
+
   Accessory *thermostatAcc = new Accessory();
 
   //Add Thermostat
@@ -262,8 +261,7 @@ void MasterThermAccessory::initAccessorySet() {
   targetTemperature->valueChangeFunctionCall = std::bind(&MasterThermAccessory::setTargetTemperature, this, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
   thermostatAcc->addCharacteristics(thermostatService,targetTemperature);
 
-  intCharacteristics *temperatureDisplayUnits = new intCharacteristics(charType_temperatureUnit,premission_read|premission_write|premission_notify,0,0,1,unit_none); 
+  intCharacteristics *temperatureDisplayUnits = new intCharacteristics(charType_temperatureUnit,premission_read|premission_write|premission_notify,0,0,1,unit_none);
   temperatureDisplayUnits->characteristics::setValue("0");
   thermostatAcc->addCharacteristics(thermostatService,temperatureDisplayUnits);
 }
-
