@@ -72,7 +72,7 @@ bool MasterThermAccessory::performSetActiveData(String variableId, String variab
     char line_buffer[BUFFER_SIZE] = {'\0'};
     char sessionId[64];
     int pos = 0;
-    int timeout = 500;
+    int timeout = 1000;
     while(client.connected() && timeout-->0) {
       while(client.available()) {
         char x = client.read();
@@ -110,7 +110,7 @@ bool MasterThermAccessory::performRefreshPassiveData() {
     char line_buffer[BUFFER_SIZE] = {'\0'};
     char sessionId[64];
     int pos = 0;
-    int timeout = 500;
+    int timeout = 1000;
     while(client.connected() && timeout-->0) {
       while(client.available()) {
         char x = client.read();
@@ -179,7 +179,7 @@ bool MasterThermAccessory::performLogin() {
     char line_buffer[BUFFER_SIZE] = {'\0'};
     char sessionId[64];
     int pos = 0;
-    int timeout = 500;
+    int timeout = 1000;
     while(client.connected() && timeout-->0) {
       while(client.available()) {
         char x = client.read();

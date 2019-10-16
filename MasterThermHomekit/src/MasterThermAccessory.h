@@ -12,7 +12,7 @@ typedef struct MasterThermCredentials {
 
 class MasterThermAccessory: public HAPAccessoryDescriptor {
 private:
-  const int REFRESH_PERIOD_MS = 10000;
+  const int REFRESH_PERIOD_MS = 30000;
   const int LOGIN_PERIOD_MS = 60000;
   const int MIN_TEMPERATURE = 15;
   const int MAX_TEMPERATURE = 30;
@@ -23,7 +23,7 @@ private:
   String sessionId = "";
   int moduleId = 0;
   void identify(bool oldValue, bool newValue, HKConnection *sender);
-  
+
   void setTargetHeatingCoolingState (bool oldValue, bool newValue, HKConnection *sender);
   void setTargetTemperature (float oldValue, float newValue, HKConnection *sender);
 
