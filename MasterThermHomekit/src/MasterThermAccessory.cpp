@@ -73,9 +73,9 @@ bool MasterThermAccessory::performSetActiveData(String variableId, String variab
     char sessionId[64];
     int pos = 0;
     int timeout = 1000;
-    while(client.connected() && timeout-->0) {
-      while(client.available()) {
-        char x = client.read();
+    int x = 0;
+    while(client.connected() && timeout-- > 0) {
+      while((x = client.read()) != -1) {
         Serial.print(x);
         line_buffer[pos++] = x;
         if(x == '\n') {
@@ -111,9 +111,9 @@ bool MasterThermAccessory::performRefreshPassiveData() {
     char sessionId[64];
     int pos = 0;
     int timeout = 1000;
+    int x;
     while(client.connected() && timeout-->0) {
-      while(client.available()) {
-        char x = client.read();
+      while((x = client.read()) != -1) {
         //Serial.print(x);
         line_buffer[pos++] = x;
         if(x == '\n' || x == ',') {
@@ -180,9 +180,9 @@ bool MasterThermAccessory::performLogin() {
     char sessionId[64];
     int pos = 0;
     int timeout = 1000;
+    int x = 0;
     while(client.connected() && timeout-->0) {
-      while(client.available()) {
-        char x = client.read();
+      while((x = client.read()) != -1) {
         line_buffer[pos++] = x;
         if(x == '\n' || x == ',') {
             if(sscanf(line_buffer,"Set-Cookie: PHPSESSID=%[^;]; path=/\r\n",sessionId)) {
