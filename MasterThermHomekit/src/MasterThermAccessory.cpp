@@ -27,7 +27,6 @@ void MasterThermAccessory::setTargetHeatingCoolingState (bool oldValue, bool new
 
 void MasterThermAccessory::setTargetTemperature (float oldValue, float newValue, HKConnection *sender){
     Serial.printf("setTargetTemperature: %f, %f\n",oldValue,newValue);
-    delay(1000);
     if(oldValue == newValue) {
       return;
     }
