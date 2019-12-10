@@ -26,13 +26,13 @@ void MasterThermAccessory::setTargetHeatingCoolingState (bool oldValue, bool new
 }
 
 void MasterThermAccessory::setTargetTemperature (float oldValue, float newValue, HKConnection *sender){
+    Serial.printf("setTargetTemperature: %f, %f\n",oldValue,newValue);
+    delay(1000);
     if(oldValue == newValue) {
       return;
     }
-    String varibleId = String("A_191");
-    String variableValue = String::format("%f",newValue);
-    checkLogin();
-    performSetActiveData(varibleId,variableValue);
+    newTemperature = newValue;
+    needsUpdateTemperature = true;
 }
 
 void MasterThermAccessory::identify(bool oldValue, bool newValue, HKConnection *sender) {
@@ -53,6 +53,8 @@ void passwordSHA1(char* password, char *hexresult) {
 }
 
 bool MasterThermAccessory::performSetActiveData(String variableId, String variableValue) {
+  Serial.println("performSetActiveData started");
+  delay(1000);
   bool result = false;
   TCPClient client;
   if(client.connect(PARAMS_BASE_URL,8091)) {
@@ -76,7 +78,7 @@ bool MasterThermAccessory::performSetActiveData(String variableId, String variab
     int x = 0;
     while(client.connected() && timeout-- > 0) {
       while((x = client.read()) != -1) {
-        Serial.print(x);
+        Serial.printf("%c",x);
         line_buffer[pos++] = x;
         if(x == '\n') {
             pos = 0;
@@ -114,7 +116,7 @@ bool MasterThermAccessory::performRefreshPassiveData() {
     int x;
     while(client.connected() && timeout-->0) {
       while((x = client.read()) != -1) {
-        //Serial.print(x);
+        Serial.printf("%c",x);
         line_buffer[pos++] = x;
         if(x == '\n' || x == ',') {
             int paramId = 0;
@@ -183,6 +185,7 @@ bool MasterThermAccessory::performLogin() {
     int x = 0;
     while(client.connected() && timeout-->0) {
       while((x = client.read()) != -1) {
+        Serial.printf("%c",x);
         line_buffer[pos++] = x;
         if(x == '\n' || x == ',') {
             if(sscanf(line_buffer,"Set-Cookie: PHPSESSID=%[^;]; path=/\r\n",sessionId)) {
@@ -226,6 +229,15 @@ void MasterThermAccessory::checkPassiveData(){
 bool MasterThermAccessory::handle() {
     checkLogin();
     checkPassiveData();
+
+    if(needsUpdateTemperature) {
+      needsUpdateTemperature = false;
+
+      String varibleId = String("A_191");
+      String variableValue = String::format("%f",newTemperature);
+      checkLogin();
+      performSetActiveData(varibleId,variableValue);
+    }
 }
 
 void MasterThermAccessory::initAccessorySet() {

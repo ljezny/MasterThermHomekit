@@ -20,6 +20,9 @@ private:
   long lastRefreshPassiveDataMS = -REFRESH_PERIOD_MS;
   long lastLoginMS = -LOGIN_PERIOD_MS;
 
+  float newTemperature = 0.0;
+  bool needsUpdateTemperature = false;
+
   String sessionId = "";
   int moduleId = 0;
   void identify(bool oldValue, bool newValue, HKConnection *sender);
