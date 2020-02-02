@@ -254,25 +254,25 @@ void MasterThermAccessory::initAccessorySet() {
   Service *thermostatService = new Service(serviceType_thermostat);
   thermostatAcc->addService(thermostatService);
 
-  currentHeatingState = new intCharacteristics(charType_currentHeatCoolMode,premission_read|premission_notify,0,1,1,unit_none);
+  currentHeatingState = new intCharacteristics(charType_currentHeatCoolMode,permission_read|permission_notify,0,1,1,unit_none);
   currentHeatingState->characteristics::setValue("0");
   thermostatAcc->addCharacteristics(thermostatService,currentHeatingState);
 
-  targetHeatingState = new intCharacteristics(charType_targetHeatCoolMode,premission_read|premission_write|premission_notify,0,1,1,unit_none);
+  targetHeatingState = new intCharacteristics(charType_targetHeatCoolMode,permission_read|permission_write|permission_notify,0,1,1,unit_none);
   targetHeatingState->characteristics::setValue("0");
   targetHeatingState->valueChangeFunctionCall = std::bind(&MasterThermAccessory::setTargetHeatingCoolingState, this, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
   thermostatAcc->addCharacteristics(thermostatService,targetHeatingState);
 
-  currentTemperature = new floatCharacteristics(charType_currentTemperature,premission_read|premission_notify,MIN_TEMPERATURE,MAX_TEMPERATURE,0.5,unit_celsius);
+  currentTemperature = new floatCharacteristics(charType_currentTemperature,permission_read|permission_notify,MIN_TEMPERATURE,MAX_TEMPERATURE,0.5,unit_celsius);
   currentTemperature->characteristics::setValue(String::format("%d",MIN_TEMPERATURE).c_str());
   thermostatAcc->addCharacteristics(thermostatService,currentTemperature);
 
-  targetTemperature = new floatCharacteristics(charType_targetTemperature,premission_read|premission_write|premission_notify,MIN_TEMPERATURE,MAX_TEMPERATURE,0.5,unit_celsius);
+  targetTemperature = new floatCharacteristics(charType_targetTemperature,permission_read|permission_write|permission_notify,MIN_TEMPERATURE,MAX_TEMPERATURE,0.5,unit_celsius);
   targetTemperature->characteristics::setValue(String::format("%d",MIN_TEMPERATURE).c_str());
   targetTemperature->valueChangeFunctionCall = std::bind(&MasterThermAccessory::setTargetTemperature, this, std::placeholders::_1, std::placeholders::_2,std::placeholders::_3);
   thermostatAcc->addCharacteristics(thermostatService,targetTemperature);
 
-  intCharacteristics *temperatureDisplayUnits = new intCharacteristics(charType_temperatureUnit,premission_read|premission_write|premission_notify,0,0,1,unit_none);
+  intCharacteristics *temperatureDisplayUnits = new intCharacteristics(charType_temperatureUnit,permission_read|permission_write|permission_notify,0,0,1,unit_none);
   temperatureDisplayUnits->characteristics::setValue("0");
   thermostatAcc->addCharacteristics(thermostatService,temperatureDisplayUnits);
 }
